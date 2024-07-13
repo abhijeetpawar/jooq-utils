@@ -1,0 +1,21 @@
+name: CI - release
+
+env:
+  ORG_GRADLE_PROJECT_githubActor: ${{ github.actor }}
+  ORG_GRADLE_PROJECT_githubToken: ${{ github.token }}
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Gradle Build
+        run: ./gradlew -Pversion=${{ github.event.release.tag_name }} clean build
+
+      - name: Gradle Publish
+        run: ./gradlew -Pversion=${{ github.event.release.tag_name }} publish

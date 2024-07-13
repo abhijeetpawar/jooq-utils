@@ -1,0 +1,22 @@
+name: CI
+
+env:
+  ORG_GRADLE_PROJECT_githubActor: ${{ github.actor }}
+  ORG_GRADLE_PROJECT_githubToken: ${{ github.token }}
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Gradle Build
+        run: ./gradlew clean build
