@@ -2,7 +2,7 @@
 
 ![Build Status](https://github.com/abhijeetpawar/jooq-utils/actions/workflows/build.yml/badge.svg)
 
-A Kotlin library simplifying jOOQ usage with:
+A Kotlin library simplifying [jOOQ](https://www.jooq.org/) usage with:
 
 - Code generation supporting [tiny types](https://darrenhobbs.com/2007/04/11/tiny-types/)
 - Programmatic transactions
@@ -145,11 +145,12 @@ class Config {
 }
 ```
 
-## Roadmap
+## Upcoming Changes
 
-1. Add usage examples & improve test coverage
-2. Update to JDK 21
-3. Support other databases (e.g., MySQL)
+1. Add usage examples 
+2. improve test coverage
+3. Update to JDK 21
+4. Support other databases (e.g., MySQL)
 
 ## Contributing
 
