@@ -24,7 +24,7 @@ import java.time.ZoneOffset.UTC
  * Jooq by default uses [java.time.OffsetDateTime] to map `TIMESTAMP WITH TIMEZONE`, however for timestamp
  * representation [java.time.Instant] would be a more accurate choice.
  *
- * Additionally this binding uses native [java.sql.Timestamp] JDBC type, because jooq by default used to encode
+ * Additionally, this binding uses native [java.sql.Timestamp] JDBC type, because jooq by default used to encode
  * timestamps as strings. This can result in postgres not being able to prune partitions if timestamp used as range
  * key.
  */

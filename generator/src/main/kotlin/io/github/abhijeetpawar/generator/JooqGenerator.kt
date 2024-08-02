@@ -1,5 +1,9 @@
 package io.github.abhijeetpawar.generator
 
+import io.github.abhijeetpawar.binding.OffsetDateTimeToInstantBinding
+import io.github.abhijeetpawar.dsl.Column
+import io.github.abhijeetpawar.dsl.Table
+import io.github.abhijeetpawar.dsl.TableListBuilder
 import org.jooq.codegen.GenerationTool
 import org.jooq.meta.jaxb.Configuration
 import org.jooq.meta.jaxb.Database
@@ -8,10 +12,6 @@ import org.jooq.meta.jaxb.Generate
 import org.jooq.meta.jaxb.Generator
 import org.jooq.meta.jaxb.Jdbc
 import org.jooq.meta.jaxb.Target
-import io.github.abhijeetpawar.binding.OffsetDateTimeToInstantBinding
-import io.github.abhijeetpawar.dsl.Column
-import io.github.abhijeetpawar.dsl.Table
-import io.github.abhijeetpawar.dsl.TableListBuilder
 import java.time.Instant
 
 class JooqGenerator(
@@ -28,9 +28,6 @@ class JooqGenerator(
     private val password: String = "test",
     private val targetPackageName: String = "persistence",
     private val targetDirectory: String = "src/main/jooq",
-
-    @Deprecated("Prefer to use kotlin data classes instead of auto-generated pojos")
-    private val generatePojos: Boolean = false
 ) {
 
     fun generate(tableBuilder: TableListBuilder.() -> Unit) {
@@ -70,7 +67,7 @@ class JooqGenerator(
             .withRecords(true)
             .withFluentSetters(true)
             .withJavaTimeTypes(true)
-            .withPojos(generatePojos)
+            .withPojos(false)
 
     private val target
         get() = Target()

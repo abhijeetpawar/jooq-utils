@@ -1,31 +1,42 @@
 # jooq-utils
 
-A **library** to simplify the setup and usage of: 
-* `jooq` code generation with domain types.
-* `jooq` transaction management.
+A Kotlin library simplifying jOOQ usage with:
 
-## Jooq Code Gen
+- Code generation supporting [tiny types](https://darrenhobbs.com/2007/04/11/tiny-types/)
+- Programmatic transactions
 
-Changes for `build.gradle.kts` -
+## Features
 
-Add a dependency of the library to your build script.
+### 1. Code Generation
+
+#### Usage
 
 ```kotlin
-// for database mapping generator code
-implementation("io.github.abhijeetpawar.jooq:jooq-utils-generator:${VERSION}")
+class UserRepository() {
 
-// for transaction management code
-implementation("io.github.abhijeetpawar.jooq:jooq-utils-transaction:${VERSION}")
+    private companion object {
+        val TABLE = Tables.USERS
+    }
+
+    suspend fun findById(userId: User.Id): User? {
+        return DSLContext.selectFrom(TABLE)
+            .where(TABLE.ID.eq(userId))
+            .awaitFirstOrNull()?.asModel()
+    }
 ```
 
-It is recommended to set the `jooq` version for your project like so,
+#### Setup
+
+1. Update `build.gradle.kts` -
+
 ```kotlin
 ext["jooq.version"] = "x.y.z"
-```
 
-Add the following config which creates a task execute to generate jooq code in `src/main/jooq/persistence` and includes this folder in the src set for compilation.
+dependencies {
+    implementation("io.github.abhijeetpawar.jooq-utils:generator:${VERSION}")
+    // ...other dependencies
+}
 
-```kotlin
 task("jooqCodeGen", JavaExec::class) {
     mainClass.set("org.company.service.JooqCodeGenKt")
     classpath = sourceSets["main"].runtimeClasspath
@@ -34,64 +45,88 @@ task("jooqCodeGen", JavaExec::class) {
 sourceSets {
     main {
         java {
-            srcDirs("src/main/jooq", "src/main/kotlin")
+            srcDirs("src/main/jooq", "src/main/kotlin", "src/main/java")
         }
     }
 }
 ```
 
-### Kotlin
-
-Create a kotlin file as follows that defines the table structure with any necessary type converters.
+2. Create `JooqCodeGen.kt` that defines the table structure with any necessary type converters.
 
 ```kotlin
-class JooqCodeGen {
-
-}
+class JooqCodeGen
 
 fun main(args: Array<String>) {
-    JooqGenerator().generate {
-        table("users") {
-            column("id")
-            column("name")
-        }
-        table("events") {
-            column("create_time", TinyTypeConverter(Instant::class, CreateTime::class))
-            column("id", TinyTypeConverter(UUID::class, Id::class))
-            column("type", EnumConverter(String::class, EventType::class))
-            column("payload", CompositeConverter(JsonbToStringConverter(), TinyTypeConverter(String::class, EventPayload::class)))
-            column("published", TinyTypeConverter(Boolean::class, Published::class))
-        }
+    JooqGenerator(
+        postgresVersion = "15.2-alpine", // postgres:15.2-alpine
+        schema = "public"
+    ).generate {
+        usersTable()
+    }
+}
+
+fun TableListBuilder.usersTable() {
+    table("users") {
+        column("id", TinyTypeConverter(UUID::class, User.Id::class))
+        column("first_name", TinyTypeConverter(String::class, User.FirstName::class))
+        column("last_name", TinyTypeConverter(String::class, User.LastName::class))
+        // ... other columns    
     }
 }
 ```
 
-**Execute bash command to generate jooq sources -**
+3. Generate jOOQ sources:
+
 ```bash
-$ ./gradlew jooqCodeGen
+./gradlew jooqCodeGen
 ```
 
-## Transactions
+`NOTE:`
+- Make sure you have docker installed
+- Migrations are present under resources/db/migration
 
-Repositories can be implemented like so,
+### 2. Transactions
+
+#### Usage
 
 ```kotlin
 class UserRepository(override val jooqTransactionManager: JooqTransactionManager) : AbstractJooqRepository() {
 
     companion object {
-        val TABLE = USERS
+        val TABLE = Tables.USERS
     }
 
-    suspend fun findOne(userId: UUID): User? {
+    suspend fun findOne(userId: User.Id): User? {
         return ctx().selectFrom(TABLE)
             .where(TABLE.ID.eq(userId))
-            .await()
-            .map { it.asModel() }.firstOrNull()
+            .awaitFirstOrNull()?.map { it.toDomainModel() }
     }
 }
 ```
 
-where `JooqTransactionManager` can simply be setup as,
+```kotlin
+class UserService(val userRepository: UserRepository, val transactionManager: JooqTransactionManager) {
+    suspend fun createUser(): User {
+        val checkDuplicate = http()
+
+        val user = User(...)
+        transactionManager.transactional {
+            userPreferences.save(preferences)
+            userRepository.save(user)
+        }
+    }
+}
+```
+
+#### Setup
+
+1. Add to `build.gradle.kts`
+
+```kotlin
+implementation("io.github.abhijeetpawar.jooq-utils:transaction:${VERSION}")
+```
+
+2. Setup transaction manager
 
 ```kotlin
 class Config {
@@ -108,35 +143,25 @@ class Config {
 }
 ```
 
-For executing transaction, add a dependency to `JooqTransactionManager`in the service, and use the `transactional { }` to invoke transactions programatically.
+## Roadmap
 
+1. Add usage examples & improve test coverage
+2. Update to JDK 21
+3. Support other databases (e.g., MySQL)
 
 ## Contributing
 
-Your contributions to improve the `jooq-utils` project are welcome! Here's how you can contribute:
+- Report issues via GitHub issue tracker
+- Submit pull requests from a forked repository
+- Ensure code is tested and follows existing style
+- Update documentation for significant changes
 
-### Reporting Issues
+## Development Setup
 
-- Use the GitHub issue tracker to report bugs or suggest features.
-- Before creating a new issue, please check if a similar issue already exists.
-- Provide as much context as possible when reporting bugs. Include your OS, Java version, jOOQ version, and steps to reproduce the issue.
-
-### Pull Requests
-
-1. Fork the repository and create your branch from `main`.
-2. If you've added code that should be tested, add tests.
-3. Ensure your code follows the existing style to maintain consistency.
-4. Update the documentation if you've made changes that affect how the library is used.
-5. Make sure your code lints and passes all tests.
-6. Issue your pull request!
-
-### Development Setup
-
-1. Clone the repository: `git clone https://github.com/yourusername/your-repo-name.git`
-2. Tests depend on docker, so make sure you have docker installed on your machine.
-2. Install dependencies: `./gradlew build` (or `mvn install` if using Maven)
-3. Run tests: `./gradlew test` (or `mvn test`)
-
+1. Clone the repository
+2. Install Docker (required for tests)
+3. Run ./gradlew build to install dependencies
+4. Execute tests with ./gradlew test
 
 `NOTE:` This project follows [semantic versioning](https://semver.org/) format.
-Patch version updates must be backward compatible.
+
