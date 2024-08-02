@@ -37,8 +37,8 @@ subprojects {
                 name = "GitHubPackages"
                 url = uri("https://maven.pkg.github.com/abhijeetpawar/${rootProject.name}")
                 credentials {
-                    username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
-                    password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
                 }
             }
         }
@@ -46,6 +46,8 @@ subprojects {
             register("mavenJava", MavenPublication::class) {
                 from(components["java"])
                 artifact(sourcesJar.get())
+                groupId = project.group.toString()
+                artifactId = project.name
             }
         }
     }

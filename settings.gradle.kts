@@ -9,9 +9,6 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         maven {
-            val githubUser: String by settings.extra.properties
-            val githubPackageReadToken: String by settings.extra.properties
-
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/abhijeetpawar/${rootProject.name}")
             credentials {
