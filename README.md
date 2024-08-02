@@ -1,5 +1,7 @@
 # jooq-utils
 
+![Build Status](https://github.com/abhijeetpawar/jooq-utils/actions/workflows/build.yml/badge.svg)
+
 A Kotlin library simplifying jOOQ usage with:
 
 - Code generation supporting [tiny types](https://darrenhobbs.com/2007/04/11/tiny-types/)
